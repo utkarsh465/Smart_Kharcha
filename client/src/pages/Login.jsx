@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Login = ({ setIsLoggedIn }) => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -11,30 +12,33 @@ const Login = ({ setIsLoggedIn }) => {
     setError("");
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
 
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
 
-    const foundUser = users.find(
-      (u) =>
-        u.email === form.email &&
-        u.password === form.password
-    );
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/login",
+        form
+      );
 
-    if (!foundUser) {
-      setError("Invalid email or password");
-      return;
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user)
+      );
+
+      setIsLoggedIn(true);
+
+      navigate("/dashboard");
+
+    } catch (error) {
+
+      setError(
+        error.response?.data?.message || "Login failed"
+      );
+
     }
-
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(foundUser)
-    );
-
-    setIsLoggedIn(true);
-    navigate("/dashboard");
   };
 
   return (
@@ -51,7 +55,7 @@ const Login = ({ setIsLoggedIn }) => {
         <input
           type="email"
           name="email"
-          placeholder="Enter Email"
+          placeholder="Enter your Email"
           value={form.email}
           onChange={handleChange}
           className="w-full px-4 py-2 rounded border dark:bg-gray-700 dark:text-white"
@@ -60,7 +64,7 @@ const Login = ({ setIsLoggedIn }) => {
         <input
           type="password"
           name="password"
-          placeholder="Enter Password"
+          placeholder="Enter your Password"
           value={form.password}
           onChange={handleChange}
           className="w-full px-4 py-2 rounded border dark:bg-gray-700 dark:text-white"

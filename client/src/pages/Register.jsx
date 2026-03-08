@@ -1,56 +1,57 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
+
   const [form, setForm] = useState({
     username: "",
     email: "",
-    password: "",
+    password: ""
   });
 
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setError("");
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
-    if (!form.username || !form.email || !form.password) {
-      setError("All fields are required");
-      return;
+    try {
+
+      const res = await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form
+      );
+
+      alert("Registration Successful");
+
+      navigate("/login");
+
+    } catch (error) {
+
+      setError(
+        error.response?.data?.message ||
+        "Registration failed"
+      );
+
     }
-
-    const existingUsers =
-      JSON.parse(localStorage.getItem("users")) || [];
-
-    // Email already exists check
-    const userExists = existingUsers.find(
-      (u) => u.email === form.email
-    );
-
-    if (userExists) {
-      setError("User already exists with this email");
-      return;
-    }
-
-    const updatedUsers = [...existingUsers, form];
-
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
-    alert("Registration successful");
-    navigate("/");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+
       <form
         onSubmit={handleRegister}
-        className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl w-96 space-y-5"
+        className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl w-96 space-y-4"
       >
+
         <h2 className="text-2xl font-bold text-center dark:text-white">
           Register
         </h2>
@@ -61,7 +62,7 @@ const Register = () => {
           placeholder="Enter Username"
           value={form.username}
           onChange={handleChange}
-          className="w-full px-4 py-2 rounded border dark:bg-gray-700 dark:text-white"
+          className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
         />
 
         <input
@@ -70,23 +71,25 @@ const Register = () => {
           placeholder="Enter Email"
           value={form.email}
           onChange={handleChange}
-          className="w-full px-4 py-2 rounded border dark:bg-gray-700 dark:text-white"
+          className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
         />
 
         <input
           type="password"
           name="password"
-          placeholder="Create Password"
+          placeholder="Enter Password"
           value={form.password}
           onChange={handleChange}
-          className="w-full px-4 py-2 rounded border dark:bg-gray-700 dark:text-white"
+          className="w-full px-4 py-2 border rounded dark:bg-gray-700 dark:text-white"
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && (
+          <p className="text-red-500 text-sm">{error}</p>
+        )}
 
         <button
           type="submit"
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
         >
           Register
         </button>
@@ -97,7 +100,9 @@ const Register = () => {
             Login
           </Link>
         </p>
+
       </form>
+
     </div>
   );
 };

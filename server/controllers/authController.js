@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 
 export const registerUser = async (req, res) => {
   try {
+
     const { username, email, password } = req.body;
 
-    // check existing user
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
@@ -15,27 +15,30 @@ export const registerUser = async (req, res) => {
       });
     }
 
-    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    const user = new User({
       username,
       email,
       password: hashedPassword
     });
 
-    await newUser.save();
+    await user.save();
 
     res.status(201).json({
       message: "User registered successfully"
     });
 
   } catch (error) {
+
     res.status(500).json({
       message: "Server error"
     });
+
   }
 };
+
+
 export const loginUser = async (req, res) => {
   try {
 
@@ -63,7 +66,7 @@ export const loginUser = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.status(200).json({
+    res.json({
       message: "Login successful",
       token,
       user: {
