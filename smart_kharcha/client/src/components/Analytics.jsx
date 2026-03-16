@@ -15,15 +15,15 @@ const Analytics = ({ transactions }) => {
 
   const totalIncome = transactions
     .filter(t => t.type === "Income")
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
   const totalExpense = transactions
     .filter(t => t.type === "Expense")
-    .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    .reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
 
   const pieData = [
-    { name: "Income", value: totalIncome },
-    { name: "Expense", value: totalExpense }
+    { name: "Income", value: totalIncome || 0 },
+    { name: "Expense", value: totalExpense || 0 }
   ];
 
   const COLORS = ["#16a34a", "#dc2626"];
@@ -32,13 +32,20 @@ const Analytics = ({ transactions }) => {
   const monthlyData = {};
 
   transactions.forEach(t => {
-    const month = new Date(t.date).toLocaleString("default", { month: "short" });
-    if (!monthlyData[month]) {
-      monthlyData[month] = 0;
-    }
-    if (t.type === "Expense") {
-      monthlyData[month] += Number(t.amount);
-    }
+    try {
+      if (!t.date) return;
+      const dateObj = new Date(t.date);
+      if (isNaN(dateObj)) return; // Skip invalid dates
+      const month = dateObj.toLocaleString("default", { month: "short" });
+      
+      if (!monthlyData[month]) {
+        monthlyData[month] = 0;
+      }
+      if (t.type === "Expense") {
+        monthlyData[month] += (Number(t.amount) || 0);
+      }
+      // eslint-disable-next-line no-unused-vars
+    } catch(e) { /* ignore parse errors */ }
   });
 
   const barData = Object.keys(monthlyData).map(month => ({

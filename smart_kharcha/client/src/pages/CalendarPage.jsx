@@ -1,22 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
 const CalendarPage = () => {
   const [date, setDate] = useState(new Date());
-  const [transactions, setTransactions] = useState([]);
-
-  useEffect(() => {
+  const [transactions] = useState(() => {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     const allTransactions =
       JSON.parse(localStorage.getItem("transactions")) || {};
 
     if (currentUser && allTransactions[currentUser.email]) {
-      setTransactions(allTransactions[currentUser.email]);
-    } else {
-      setTransactions([]);
+      return allTransactions[currentUser.email];
     }
-  }, []);
+    return [];
+  });
 
   
   // Filter transactions for selected date

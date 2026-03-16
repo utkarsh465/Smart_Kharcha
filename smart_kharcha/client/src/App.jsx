@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import SidebarLayout from "./layout/SidebarLayout";
@@ -14,14 +14,9 @@ import About from "./pages/About";
 import ReceiptScannerPage from "./pages/ReceiptScannerPage";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const status = localStorage.getItem("isLoggedIn");
-    if (status === "true") {
-      setIsLoggedIn(true);
-    }
-  }, []);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
 
   return (
     <Routes>

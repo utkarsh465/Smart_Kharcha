@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Profile = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    return JSON.parse(localStorage.getItem("currentUser"));
+  });
   const [editMode, setEditMode] = useState(false);
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
+  const [form, setForm] = useState(() => {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    return {
+      username: currentUser ? currentUser.username : "",
+      email: currentUser ? currentUser.email : "",
+    };
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -16,17 +21,6 @@ const Profile = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  useEffect(() => {
-    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    if (currentUser) {
-      setUser(currentUser);
-      setForm({
-        username: currentUser.username,
-        email: currentUser.email,
-      });
-    }
-  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -74,25 +68,11 @@ const Profile = () => {
       JSON.stringify(updatedUsers)
     );
 
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(
-        updatedUsers.find(
-          (u) => u.email === user.email
-        )
-      )
-    );
+    const updatedUser = updatedUsers.find((u) => u.email === user.email);
 
-    setUser(
-      updatedUsers.find(
-        (u) => u.email === user.email
-      )
-    );
-
-    localStorage.setItem("user", JSON.stringify(updatedUser));
     localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-
     setUser(updatedUser);
+
     setSuccess("Profile updated successfully");
     setEditMode(false);
   };
