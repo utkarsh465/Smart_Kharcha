@@ -10,6 +10,9 @@ const Header = ({ openSidebar, setIsLoggedIn }) => {
   const { darkMode, setDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const [currentUser] = useState(() => {
+    return JSON.parse(localStorage.getItem("currentUser"));
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -39,6 +42,13 @@ const Header = ({ openSidebar, setIsLoggedIn }) => {
         <FaBars />
       </button>
 
+      {/* Center Title */}
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <h1 className="text-xl md:text-2xl font-display font-bold bg-gradient-to-r from-brand-primary to-purple-500 bg-clip-text text-transparent">
+          Smart Kharcha
+        </h1>
+      </div>
+
       {/* Right Side */}
       <div className="flex items-center gap-5">
 
@@ -54,9 +64,10 @@ const Header = ({ openSidebar, setIsLoggedIn }) => {
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="text-2xl text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-secondary hover:scale-110 transition-all duration-200"
+            className="flex flex-col items-center justify-center text-slate-700 dark:text-slate-300 hover:text-brand-primary dark:hover:text-brand-secondary hover:scale-105 transition-all duration-200"
           >
-            <FaUserCircle />
+            <FaUserCircle className="text-2xl" />
+            <span className="text-xs font-semibold mt-1">{currentUser?.username || "Profile"}</span>
           </button>
 
           <AnimatePresence>
