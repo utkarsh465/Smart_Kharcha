@@ -19,7 +19,7 @@ const CalendarPage = () => {
   // Filter transactions for selected date
   const transactionsOnDate = transactions.filter((t) => {
     if (!t.date) return false;
-    const selected = new Date(date).toISOString().split("T")[0];
+    const selected = new Date(date).toLocaleDateString('en-CA');
     return t.date === selected;
   });
 
@@ -38,7 +38,7 @@ const CalendarPage = () => {
             value={date}
             tileContent={({ date, view }) => {
               if (view === "month") {
-                const formatted = date.toISOString().split("T")[0];
+                const formatted = date.toLocaleDateString('en-CA');
 
                 const dayTransactions = transactions.filter(
                   (t) => t.date === formatted

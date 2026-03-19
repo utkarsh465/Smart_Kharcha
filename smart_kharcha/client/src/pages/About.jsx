@@ -1,6 +1,7 @@
 import React from "react";
 import { FaCode, FaServer, FaHeart, FaRocket, FaLinkedin } from "react-icons/fa";
 import utkarshPhoto from "../assets/utkarsh.jpg";
+import vidushPhoto from "../assets/vidush.jpeg";
 
 const About = () => {
   return (
@@ -73,9 +74,9 @@ const About = () => {
                 </div>
                 <h3 className="text-xl font-display font-bold text-slate-800 dark:text-white">Utkarsh Raj</h3>
                 <p className="text-brand-primary text-sm font-medium mb-3">UI/UX & React Expert</p>
-                <a 
-                  href="https://www.linkedin.com/in/utkarsh-raj-a91b83245/" 
-                  target="_blank" 
+                <a
+                  href="https://www.linkedin.com/in/utkarsh-raj-a91b83245/"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-full transition-colors font-medium text-sm"
                   onClick={(e) => e.stopPropagation()}
@@ -109,11 +110,20 @@ const About = () => {
               {/* Back side */}
               <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-slate-800 dark:to-brand-dark rounded-3xl overflow-hidden flex flex-col items-center justify-center shadow-lg border border-emerald-200 dark:border-emerald-900/50">
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-slate-700 shadow-md mb-4 bg-slate-200 flex items-center justify-center">
-                  {/* Replace this div with an actual img tag when you have the photo */}
-                  <span className="text-4xl text-slate-400 font-bold">VP</span>
+                  <img src={vidushPhoto} alt="Vidush Prakash Sinha" className="w-full h-full object-cover" />
                 </div>
                 <h3 className="text-xl font-display font-bold text-slate-800 dark:text-white">Vidush Prakash Sinha</h3>
-                <p className="text-emerald-500 text-sm font-medium">Node.js & Database Pro</p>
+                <p className="text-emerald-500 text-sm font-medium mb-3">Node.js & Database Pro</p>
+                <a
+                  href="https://www.linkedin.com/in/vidush-prakash-sinha-a2596a244/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0A66C2] hover:bg-[#004182] text-white rounded-full transition-colors font-medium text-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <FaLinkedin className="text-lg" />
+                  Connect
+                </a>
               </div>
 
             </div>

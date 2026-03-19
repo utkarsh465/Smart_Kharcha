@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Tesseract from "tesseract.js";
 
 const ReceiptScannerPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [amount, setAmount] = useState(null);
 
@@ -10,21 +12,89 @@ const ReceiptScannerPage = () => {
         if (!file) return;
 
         setPreview(URL.createObjectURL(file));
-
         setLoading(true);
 
-        const { data } = await Tesseract.recognize(file, "eng");
+        try {
+            const { data } = await Tesseract.recognize(file, "eng");
+            const text = data.text;
+            const detectedAmount = extractAmount(text);
+            
+            if (detectedAmount) {
+                setAmount(detectedAmount);
+            } else {
+                console.log("No amount detected");
+            }
+        } catch (error) {
+            console.error("OCR Error:", error);
+            alert("Failed to scan receipt. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        const text = data.text;
+    const extractAmount = (text) => {
+        const lines = text.split("\n");
+        let potentialAmounts = [];
 
-        const numbers = text.match(/\d+(\.\d+)?/g);
+        // Common patterns for amounts in receipts
+        const amountRegex = /(\d+[\.,]\d{2})/g; // 123.45 or 123,45
+        const simpleNumberRegex = /(\d{2,})/g; // Just numbers with at least 2 digits
 
-        if (numbers && numbers.length > 0) {
-            const maxAmount = Math.max(...numbers.map(Number));
-            setAmount(maxAmount);
+        // 1. Look for lines with payment-related keywords
+        const targetKeywords = ["total", "net", "amount", "grand", "payable", "paid", "₹", "rs", "inr"];
+        
+        for (const line of lines) {
+            const lowerLine = line.toLowerCase();
+            const hasKeyword = targetKeywords.some(kw => lowerLine.includes(kw));
+
+            if (hasKeyword) {
+                // Find all numbers in this line
+                const matches = line.match(/(\d+[\d\.,]*)/g) || [];
+                for (const match of matches) {
+                    const cleanNum = match.replace(/,/g, '');
+                    const num = parseFloat(cleanNum);
+                    if (!isNaN(num) && num > 0 && num < 100000) { // Reasonable limit for daily kharcha
+                        potentialAmounts.push({
+                            value: num,
+                            priority: lowerLine.includes("total") || lowerLine.includes("grand") ? 3 : 2
+                        });
+                    }
+                }
+            }
         }
 
-        setLoading(false);
+        // 2. If no keywords found or captured, look for the largest number that looks like a price (has decimals)
+        if (potentialAmounts.length === 0) {
+            const allMatches = text.match(/(\d+[\.,]\d{2})/g) || [];
+            for (const match of allMatches) {
+                const cleanNum = match.replace(/,/g, '');
+                const num = parseFloat(cleanNum);
+                if (!isNaN(num) && num > 0 && num < 100000) {
+                    potentialAmounts.push({ value: num, priority: 1 });
+                }
+            }
+        }
+
+        // 3. Fallback: just find the largest reasonable number
+        if (potentialAmounts.length === 0) {
+            const allNumbers = text.match(/(\d+(\.\d{1,2})?)/g) || [];
+            for (const match of allNumbers) {
+                const num = parseFloat(match);
+                // Avoid picking up dates (often match \d{2}-\d{2}-\d{4} or similar)
+                // If it looks like a year (2023-2026), skip it
+                if (!isNaN(num) && num > 10 && num < 100000 && num !== 2024 && num !== 2025 && num !== 2026) {
+                    potentialAmounts.push({ value: num, priority: 0 });
+                }
+            }
+        }
+
+        if (potentialAmounts.length > 0) {
+            // Sort by priority (desc) then value (desc)
+            potentialAmounts.sort((a, b) => b.priority - a.priority || b.value - a.value);
+            return potentialAmounts[0].value;
+        }
+
+        return null;
     };
   const [preview, setPreview] = useState(null);
 
@@ -38,9 +108,9 @@ const ReceiptScannerPage = () => {
 
     const newTransaction = {
       type: "Expense",
-      amount: amount,
+      amount: amount.toString(),
       category: "Other",
-      date: new Date().toISOString().split("T")[0],
+      date: new Date().toLocaleDateString('en-CA'), // YYYY-MM-DD
     };
 
     const updatedTransactions = [...userTransactions, newTransaction];
@@ -53,8 +123,8 @@ const ReceiptScannerPage = () => {
     );
 
     alert("Expense added successfully");
-
     setAmount(null);
+    navigate("/dashboard");
   };
 
   return (

@@ -6,77 +6,81 @@ const ReceiptScanner = ({ setAmount }) => {
 
   const handleScan = async (e) => {
     const file = e.target.files[0];
-
     if (!file) return;
 
     setLoading(true);
 
-    const { data } = await Tesseract.recognize(
-      file,
-      "eng"
-    );
+    try {
+      const { data } = await Tesseract.recognize(file, "eng");
+      const text = data.text;
+      const detectedAmount = extractAmount(text);
+      
+      if (detectedAmount) {
+        setAmount(detectedAmount);
+      }
+    } catch (error) {
+      console.error("OCR Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    
-
-    const text = data.text;
+  const extractAmount = (text) => {
     const lines = text.split("\n");
-    let maxAmount = 0;
-    let foundAmounts = [];
+    let potentialAmounts = [];
 
-    // 1. First, try to find lines that explicitly mention "Total", "Amount", or "Net"
+    // Keywords to search for
+    const targetKeywords = ["total", "net", "amount", "grand", "payable", "paid", "₹", "rs", "inr"];
+    
     for (const line of lines) {
       const lowerLine = line.toLowerCase();
-      // Look for keywords or currency symbols
-      if (
-        lowerLine.includes("total") ||
-        lowerLine.includes("amount") ||
-        lowerLine.includes("net") ||
-        lowerLine.includes("₹") ||
-        lowerLine.includes("rs")
-      ) {
-        // Extract all numbers from this interesting line
-        const numbersInLine = line.match(/\d+(\.\d+)?/g);
-        if (numbersInLine) {
-           numbersInLine.forEach(n => {
-             const num = Number(n);
-             // Amounts usually aren't over 10 lakh in daily expenses, and aren't 0
-             if (!isNaN(num) && num > 0 && num < 1000000) {
-                foundAmounts.push(num);
-             }
-           });
+      const hasKeyword = targetKeywords.some(kw => lowerLine.includes(kw));
+
+      if (hasKeyword) {
+        // Extract numbers from this interesting line
+        const matches = line.match(/(\d+[\d\.,]*)/g) || [];
+        for (const match of matches) {
+          const cleanNum = match.replace(/,/g, '');
+          const num = parseFloat(cleanNum);
+          if (!isNaN(num) && num > 0 && num < 100000) {
+            potentialAmounts.push({
+              value: num,
+              priority: lowerLine.includes("total") || lowerLine.includes("grand") ? 3 : 2
+            });
+          }
         }
       }
     }
 
-    // 2. If we found potential amounts from matching lines, get the highest one format
-    if (foundAmounts.length > 0) {
-      maxAmount = Math.max(...foundAmounts);
-    } 
-    // 3. Fallback: If no keywords/symbols found, find the largest reasonable decimal number in the whole text
-    else {
-      const allNumbers = text.match(/\d+(\.\d+)?/g);
-      if (allNumbers && allNumbers.length > 0) {
-        const validNumbersStr = allNumbers.filter(n => {
-          const num = Number(n);
-          return !isNaN(num) && num < 1000000;
-        });
-        
-        const decimalsStr = validNumbersStr.filter(n => n.includes('.'));
-        
-        if (decimalsStr.length > 0) {
-          maxAmount = Math.max(...decimalsStr.map(Number));
-        } else if (validNumbersStr.length > 0) {
-          maxAmount = Math.max(...validNumbersStr.map(Number));
+    // Fallback 1: Decimal numbers
+    if (potentialAmounts.length === 0) {
+      const allMatches = text.match(/(\d+[\.,]\d{2})/g) || [];
+      for (const match of allMatches) {
+        const cleanNum = match.replace(/,/g, '');
+        const num = parseFloat(cleanNum);
+        if (!isNaN(num) && num > 0 && num < 100000) {
+          potentialAmounts.push({ value: num, priority: 1 });
         }
       }
     }
 
-    if (maxAmount > 0) {
-      setAmount(maxAmount);
+    // Fallback 2: Any reasonable numbers
+    if (potentialAmounts.length === 0) {
+      const allNumbers = text.match(/(\d+(\.\d{1,2})?)/g) || [];
+      for (const match of allNumbers) {
+        const num = parseFloat(match);
+        if (!isNaN(num) && num > 10 && num < 100000 && num !== 2024 && num !== 2025 && num !== 2026) {
+          potentialAmounts.push({ value: num, priority: 0 });
+        }
+      }
     }
 
-    setLoading(false);
-    
+    if (potentialAmounts.length > 0) {
+      potentialAmounts.sort((a, b) => b.priority - a.priority || b.value - a.value);
+      return potentialAmounts[0].value;
+    }
+
+    return null;
   };
 
   return (
